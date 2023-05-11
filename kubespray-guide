@@ -1,0 +1,73 @@
+```
+sudo apt update
+sudo apt install python3-pip
+```
+
+```
+git clone -b release-2.21 --single-branch https://github.com/kubernetes-sigs/kubespray.git
+cd kubespray
+```
+
+```
+sudo pip3 install -r requirements.txt
+```
+
+```
+cp -rfp inventory/sample/ inventory/mycluster
+cd inventory/mycluster
+vi inventory.ini
+```
+
+```
+[all]
+kube ansible_host=192.168.56.10 ip=192.168.56.10 ansible_connection=local
+
+[kube_control_plane]
+kube
+
+[etcd]
+kube
+
+[kube_node]
+kube
+
+[calico_rr]
+
+[k8s_cluster:children]
+kube_control_plane
+kube_node
+calico_rr
+```
+
+```
+vi group_vars/k8s_cluster/addons.yml
+```
+
+```
+helm_enabled: true
+...
+metallb_enabled: true
+metallb_speaker_enabled: true
+metallb_ip_range:
+  - "192.168.56.200-192.168.56.209"
+...
+metallb_protocol: "layer2"
+```
+
+```
+vi group_vars/k8s_cluster/k8s-cluster.yml
+```
+
+```
+kube_proxy_strict_arp: true
+```
+
+```
+ansible-playbook -i inventory/mycluster/inventory.ini cluster.yml -b
+```
+
+```
+mkdir ~/.kube
+sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+sudo chown $USER:$USER ~/.kube/config
+```
